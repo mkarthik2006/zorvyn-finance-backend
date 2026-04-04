@@ -1,0 +1,44 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/finance_db
+    username: finance_user
+    password: finance_pass
+    driver-class-name: org.postgresql.Driver
+
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    # properties:
+    #   hibernate:
+    #     format_sql: true
+    #     dialect: org.hibernate.dialect.PostgreSQLDialect
+
+
+jwt:
+
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4228472B4B6250645367566B5970}
+  expiration: 86400000   # 24 hours
+
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+
+
+logging:
+  level:
+    com.zorvyn.finance: INFO
+    org.springframework.security: INFO
