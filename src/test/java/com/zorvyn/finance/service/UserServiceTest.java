@@ -10,6 +10,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
@@ -123,6 +126,13 @@ class UserServiceTest {
 
     @Test
     void deleteUser_ShouldSoftDelete() {
+        // Mock SecurityContext — current user is a DIFFERENT user (admin@example.com)
+        Authentication authentication = mock(Authentication.class);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn("admin@example.com");
+        SecurityContextHolder.setContext(securityContext);
+
         when(userRepository.findByIdAndDeletedFalse(1L)).thenReturn(Optional.of(testUser));
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
@@ -134,7 +144,30 @@ class UserServiceTest {
     }
 
     @Test
+    void deleteUser_SelfDelete_ShouldThrowException() {
+        // Mock SecurityContext — current user IS the target user
+        Authentication authentication = mock(Authentication.class);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn("john@example.com");
+        SecurityContextHolder.setContext(securityContext);
+
+        when(userRepository.findByIdAndDeletedFalse(1L)).thenReturn(Optional.of(testUser));
+
+        assertThatThrownBy(() -> userService.deleteUser(1L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("cannot delete your own account");
+    }
+
+    @Test
     void updateUserStatus_ShouldUpdateCorrectly() {
+        // Mock SecurityContext — current user is a DIFFERENT user (admin@example.com)
+        Authentication authentication = mock(Authentication.class);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn("admin@example.com");
+        SecurityContextHolder.setContext(securityContext);
+
         UserStatusRequest request = UserStatusRequest.builder()
                 .status(UserStatus.INACTIVE)
                 .build();
@@ -144,14 +177,31 @@ class UserServiceTest {
 
         UserResponse response = userService.updateUserStatus(1L, request);
 
-       
         assertThat(testUser.getStatus()).isEqualTo(UserStatus.INACTIVE);
-
-        
         assertThat(response).isNotNull();
         assertThat(response.getId()).isEqualTo(1L);
         assertThat(response.getStatus()).isEqualTo(UserStatus.INACTIVE);
         assertThat(response.getName()).isEqualTo("John Doe");
         verify(userRepository).save(testUser);
+    }
+
+    @Test
+    void updateUserStatus_SelfDeactivate_ShouldThrowException() {
+        // Mock SecurityContext — current user IS the target user
+        Authentication authentication = mock(Authentication.class);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn("john@example.com");
+        SecurityContextHolder.setContext(securityContext);
+
+        UserStatusRequest request = UserStatusRequest.builder()
+                .status(UserStatus.INACTIVE)
+                .build();
+
+        when(userRepository.findByIdAndDeletedFalse(1L)).thenReturn(Optional.of(testUser));
+
+        assertThatThrownBy(() -> userService.updateUserStatus(1L, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("cannot deactivate your own account");
     }
 }

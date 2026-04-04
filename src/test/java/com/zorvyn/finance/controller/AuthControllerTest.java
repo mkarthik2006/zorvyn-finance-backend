@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AuthController.class)
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class, JwtAuthenticationEntryPoint.class})
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
 class AuthControllerTest {
 
     @Autowired
@@ -46,7 +46,6 @@ class AuthControllerTest {
                 .password("password123")
                 .build();
 
-    
         LoginResponse response = LoginResponse.builder()
                 .token("jwt-token-here")
                 .tokenType("Bearer")

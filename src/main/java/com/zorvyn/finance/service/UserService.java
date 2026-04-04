@@ -7,6 +7,7 @@ import com.zorvyn.finance.exception.DuplicateResourceException;
 import com.zorvyn.finance.exception.ResourceNotFoundException;
 import com.zorvyn.finance.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,7 +59,7 @@ public class UserService {
     public UserResponse updateUser(Long id, UserRequest request) {
         User user = findUserOrThrow(id);
 
-        
+        // Check email uniqueness if changed
         if (!user.getEmail().equals(request.getEmail()) &&
                 userRepository.existsByEmailAndDeletedFalse(request.getEmail())) {
             throw new DuplicateResourceException("User with email '" + request.getEmail() + "' already exists");
@@ -83,6 +84,13 @@ public class UserService {
     @Transactional
     public UserResponse updateUserStatus(Long id, UserStatusRequest request) {
         User user = findUserOrThrow(id);
+
+        // Prevent admin from deactivating themselves
+        String currentEmail = getCurrentUserEmail();
+        if (user.getEmail().equals(currentEmail) && request.getStatus() == UserStatus.INACTIVE) {
+            throw new IllegalArgumentException("You cannot deactivate your own account");
+        }
+
         user.setStatus(request.getStatus());
         userRepository.save(user);
         return mapToResponse(user);
@@ -91,6 +99,13 @@ public class UserService {
     @Transactional
     public void deleteUser(Long id) {
         User user = findUserOrThrow(id);
+
+        // Prevent admin from deleting themselves
+        String currentEmail = getCurrentUserEmail();
+        if (user.getEmail().equals(currentEmail)) {
+            throw new IllegalArgumentException("You cannot delete your own account");
+        }
+
         user.setDeleted(true);
         user.setStatus(UserStatus.INACTIVE);
         userRepository.save(user);
@@ -99,6 +114,10 @@ public class UserService {
     private User findUserOrThrow(Long id) {
         return userRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+    }
+
+    private String getCurrentUserEmail() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
     private UserResponse mapToResponse(User user) {

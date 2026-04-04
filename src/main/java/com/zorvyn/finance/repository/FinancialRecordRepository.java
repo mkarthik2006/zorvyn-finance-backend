@@ -17,15 +17,18 @@ import java.util.Optional;
 @Repository
 public interface FinancialRecordRepository extends JpaRepository<FinancialRecord, Long> {
 
-   
     default Optional<FinancialRecord> findByIdAndDeletedFalse(Long id) {
         return findById(id);
     }
 
-    
-    @Query("SELECT fr FROM FinancialRecord fr WHERE " +
-            "(:type IS NULL OR fr.type = :type) " +
-            "AND (:category IS NULL OR LOWER(CAST(fr.category AS text)) LIKE LOWER(CONCAT('%', CAST(:category AS text), '%'))) " +
+    @Query(value = "SELECT fr FROM FinancialRecord fr JOIN FETCH fr.createdBy WHERE fr.deleted = false " +
+            "AND (:type IS NULL OR fr.type = :type) " +
+            "AND (:category IS NULL OR LOWER(fr.category) LIKE LOWER(CONCAT('%', :category, '%'))) " +
+            "AND (:startDate IS NULL OR fr.date >= :startDate) " +
+            "AND (:endDate IS NULL OR fr.date <= :endDate)",
+           countQuery = "SELECT COUNT(fr) FROM FinancialRecord fr WHERE fr.deleted = false " +
+            "AND (:type IS NULL OR fr.type = :type) " +
+            "AND (:category IS NULL OR LOWER(fr.category) LIKE LOWER(CONCAT('%', :category, '%'))) " +
             "AND (:startDate IS NULL OR fr.date >= :startDate) " +
             "AND (:endDate IS NULL OR fr.date <= :endDate)")
     Page<FinancialRecord> findAllWithFilters(
@@ -35,38 +38,32 @@ public interface FinancialRecordRepository extends JpaRepository<FinancialRecord
             @Param("endDate") LocalDate endDate,
             Pageable pageable);
 
-    
     @Query("SELECT COALESCE(SUM(fr.amount), 0) FROM FinancialRecord fr " +
-            "WHERE fr.type = :type")
+            "WHERE fr.deleted = false AND fr.type = :type")
     BigDecimal sumByType(@Param("type") RecordType type);
 
-    
     @Query("SELECT COUNT(fr) FROM FinancialRecord fr " +
-            "WHERE fr.type = :type")
+            "WHERE fr.deleted = false AND fr.type = :type")
     long countByType(@Param("type") RecordType type);
 
-    
     long count();
 
     default long countByDeletedFalse() {
         return count();
     }
 
-    
     @Query("SELECT fr.category, fr.type, COALESCE(SUM(fr.amount), 0), COUNT(fr) " +
-            "FROM FinancialRecord fr " +
+            "FROM FinancialRecord fr WHERE fr.deleted = false " +
             "GROUP BY fr.category, fr.type ORDER BY fr.category")
     List<Object[]> getCategoryWiseSummary();
 
-    
     @Query("SELECT EXTRACT(YEAR FROM fr.date), EXTRACT(MONTH FROM fr.date), fr.type, " +
             "COALESCE(SUM(fr.amount), 0), COUNT(fr) " +
-            "FROM FinancialRecord fr " +
+            "FROM FinancialRecord fr WHERE fr.deleted = false " +
             "GROUP BY EXTRACT(YEAR FROM fr.date), EXTRACT(MONTH FROM fr.date), fr.type " +
             "ORDER BY EXTRACT(YEAR FROM fr.date), EXTRACT(MONTH FROM fr.date)")
     List<Object[]> getMonthlyTrends();
 
-    
-    @Query("SELECT fr FROM FinancialRecord fr ORDER BY fr.createdAt DESC")
+    @Query("SELECT fr FROM FinancialRecord fr JOIN FETCH fr.createdBy WHERE fr.deleted = false ORDER BY fr.createdAt DESC")
     List<FinancialRecord> findRecentRecords(Pageable pageable);
 }
