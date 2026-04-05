@@ -56,7 +56,7 @@ Cross-cutting:
 
 | Component        | Technology                          |
 |------------------|-------------------------------------|
-| Language         | Java 17                             |
+| Language         | Java 21                             |
 | Framework        | Spring Boot 3.2.4                   |
 | Security         | Spring Security + JWT (jjwt 0.12.5) |
 | Database         | PostgreSQL 16                       |
