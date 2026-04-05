@@ -89,7 +89,7 @@ Cross-cutting:
 - **Pagination & Sorting** — Configurable page size, sort field, and direction on all list endpoints
 - **Swagger UI** — Interactive API documentation at `/swagger-ui.html` with Bearer token support
 - **Docker Support** — Full `docker-compose.yml` with health checks for one-command setup
-- **Unit Tests** — Comprehensive service layer + controller layer tests with Mockito and MockMvc (26 tests, 0 failures)
+- **Unit Tests** — Comprehensive service layer + controller layer tests with Mockito and MockMvc (28 tests, 0 failures)
 
 ---
 
@@ -397,13 +397,13 @@ curl -X POST http://localhost:8080/api/auth/login \
 mvn test
 ```
 
-**Test Results: 26 tests, 0 failures**
+**Test Results: 28 tests, 0 failures**
 
 | Test Suite                      | Tests | Status |
 |---------------------------------|:-----:|:------:|
 | `FinancialRecordControllerTest` |   5   |  Pass  |
 | `AuthControllerTest`            |   4   |  Pass  |
-| `UserServiceTest`               |   7   |  Pass  |
+| `UserServiceTest`               |   9   |  Pass  |
 | `DashboardServiceTest`          |   4   |  Pass  |
 | `FinancialRecordServiceTest`    |   5   |  Pass  |
 | `FinanceApplicationTests`       |   1   |  Pass  |
@@ -609,7 +609,7 @@ zorvyn-finance-backend/
 | Pagination (Optional)               | Configurable page/size/sortBy/sortDir                   | Completed |
 | Search Support (Optional)            | Case-insensitive category partial match                 | Completed |
 | Soft Delete (Optional)              | Global `@SQLRestriction` on both entities               | Completed |
-| Unit Tests (Optional)               | 26 tests, all passing                                   | Completed |
+| Unit Tests (Optional)               | 28 tests, all passing                                   | Completed |
 | API Documentation (Optional)        | Swagger UI at `/swagger-ui.html`                        | Completed |
 | Docker (Optional)                   | Multi-stage Dockerfile + docker-compose                 | Completed |
 
