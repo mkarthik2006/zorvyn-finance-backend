@@ -1,9 +1,3 @@
-# zorvyn-finance-backend
-
-Finance Data Processing & Access Control Backend built with Spring Boot, JWT, RBAC, PostgreSQL, and Dashboard Analytics for Zorvyn Backend Developer Intern Assessment.
-
----
-
 # Finance Data Processing & Access Control Backend
 
 A comprehensive backend system for a finance dashboard, built with **Spring Boot 3**, **PostgreSQL**, **JWT Authentication**, and **Role-Based Access Control (RBAC)**.
@@ -14,18 +8,19 @@ A comprehensive backend system for a finance dashboard, built with **Spring Boot
 
 ## Table of Contents
 
-- [Architecture](#-architecture)
-- [Tech Stack](#-tech-stack)
-- [Features](#-features)
-- [Role-Based Access Control](#-role-based-access-control)
-- [API Documentation](#-api-documentation)
-- [Setup Instructions](#-setup-instructions)
-- [Running Tests](#-running-tests)
-- [Assumptions](#-assumptions)
-- [Design Decisions](#-design-decisions)
-- [Trade-offs](#-trade-offs)
-- [Data Model](#-data-model)
-- [Project Structure](#-project-structure)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Features](#features)
+- [Role-Based Access Control](#role-based-access-control)
+- [API Documentation](#api-documentation)
+- [Setup Instructions](#setup-instructions)
+- [Running Tests](#running-tests)
+- [Assumptions](#assumptions)
+- [Design Decisions](#design-decisions)
+- [Trade-offs](#trade-offs)
+- [Data Model](#data-model)
+- [Project Structure](#project-structure)
+- [Assignment Compliance Summary](#assignment-compliance-summary)
 
 ---
 
@@ -33,26 +28,27 @@ A comprehensive backend system for a finance dashboard, built with **Spring Boot
 
 ```
 Controller Layer (REST APIs)
-       ↓
+       |
 Service Layer (Business Logic)
-       ↓
+       |
 Repository Layer (Data Access - JPA)
-       ↓
+       |
 Database (PostgreSQL)
 
 Cross-cutting:
-├── Security (JWT + Spring Security + RBAC)
-├── Exception Handling (@ControllerAdvice)
-├── DTO Validation (Jakarta Bean Validation)
-└── Standardized API Response Wrapper
++-- Security (JWT + Spring Security + RBAC)
++-- Exception Handling (@ControllerAdvice)
++-- DTO Validation (Jakarta Bean Validation)
++-- Standardized API Response Wrapper
 ```
 
 **Separation of Concerns:**
-- **Controllers** — Handle HTTP requests/responses only
-- **Services** — Contain all business logic
-- **Repositories** — Data access via Spring Data JPA
-- **DTOs** — Decouple API contracts from entities, preventing data leakage
-- **Security** — JWT-based stateless authentication with role enforcement
+
+- **Controllers** handle HTTP requests and responses only
+- **Services** contain all business logic
+- **Repositories** provide data access via Spring Data JPA
+- **DTOs** decouple API contracts from entities, preventing data leakage
+- **Security** provides JWT-based stateless authentication with role enforcement
 
 ---
 
@@ -76,69 +72,72 @@ Cross-cutting:
 ## Features
 
 ### Core
-- ✅ **User Management** — Full CRUD with role assignment and active/inactive status management
-- ✅ **Financial Records** — Full CRUD with filtering, pagination, and sorting
-- ✅ **Dashboard Analytics** — Summary, category-wise breakdown, monthly trends, recent activity
-- ✅ **Role-Based Access Control** — JWT + `@PreAuthorize` enforcement at every endpoint
-- ✅ **Validation** — DTO-level (`@NotNull`, `@Positive`, `@PastOrPresent`, `@Email`) + business rules
-- ✅ **Global Exception Handling** — `@ControllerAdvice` with proper HTTP status codes (400, 401, 403, 404, 409, 500)
-- ✅ **Standardized Response Format** — Every endpoint returns `{success, message, data, timestamp}`
+
+- **User Management** — Full CRUD with role assignment and active/inactive status management
+- **Financial Records** — Full CRUD with filtering, pagination, and sorting
+- **Dashboard Analytics** — Summary, category-wise breakdown, monthly trends, recent activity
+- **Role-Based Access Control** — JWT + `@PreAuthorize` enforcement at every endpoint
+- **Validation** — DTO-level (`@NotNull`, `@Positive`, `@PastOrPresent`, `@Email`) + business rules
+- **Global Exception Handling** — `@ControllerAdvice` with proper HTTP status codes (400, 401, 403, 404, 409, 500)
+- **Standardized Response Format** — Every endpoint returns `{success, message, data, timestamp}`
 
 ### Enhancements
-- ✅ **Security Hardening** — Public registration defaults to restricted `VIEWER` role; privilege escalation prevented
-- ✅ **Global Soft Delete** — Automated filtering via Hibernate `@SQLRestriction` ensures deleted data never leaks into any query, join, or aggregation
-- ✅ **JWT Authentication** — Stateless, token-based auth using modern JJWT 0.12.x API
-- ✅ **Pagination & Sorting** — Configurable page size, sort field, and direction on all list endpoints
-- ✅ **Swagger UI** — Interactive API documentation at `/swagger-ui.html` with Bearer token support
-- ✅ **Docker Support** — Full `docker-compose.yml` with health checks for one-command setup
-- ✅ **Unit Tests** — Comprehensive service layer + controller layer tests with Mockito and MockMvc (26 tests, 0 failures)
+
+- **Security Hardening** — Public registration defaults to restricted `VIEWER` role; privilege escalation prevented
+- **Global Soft Delete** — Automated filtering via Hibernate `@SQLRestriction` ensures deleted data never leaks into any query, join, or aggregation
+- **JWT Authentication** — Stateless, token-based auth using modern JJWT 0.12.x API
+- **Pagination & Sorting** — Configurable page size, sort field, and direction on all list endpoints
+- **Swagger UI** — Interactive API documentation at `/swagger-ui.html` with Bearer token support
+- **Docker Support** — Full `docker-compose.yml` with health checks for one-command setup
+- **Unit Tests** — Comprehensive service layer + controller layer tests with Mockito and MockMvc (26 tests, 0 failures)
 
 ---
 
 ## Role-Based Access Control
 
 ### Authorization Strategy
+
 - **JWT-based authentication** — Stateless, no server-side sessions
-- **Role-based authorization** — Enforced via Spring Security's `@PreAuthorize` annotations and URL-level security rules
+- **Role-based authorization** — Enforced via Spring Security `@PreAuthorize` annotations and URL-level security rules
 - **Zero-Trust Registration** — All new registrations default to `VIEWER`. Elevated roles (`ADMIN`, `ANALYST`) can only be assigned by an existing Admin via the `/api/users` management endpoint. This prevents privilege escalation attacks.
 
 ### Role Permissions
 
 | Endpoint                       | ADMIN | ANALYST | VIEWER |
 |--------------------------------|:-----:|:-------:|:------:|
-| `POST /api/auth/*`             |  ✅   |   ✅    |   ✅   |
-| `GET /api/users`               |  ✅   |   ❌    |   ❌   |
-| `POST /api/users`              |  ✅   |   ❌    |   ❌   |
-| `PUT /api/users/{id}`          |  ✅   |   ❌    |   ❌   |
-| `PATCH /api/users/{id}/status` |  ✅   |   ❌    |   ❌   |
-| `DELETE /api/users/{id}`       |  ✅   |   ❌    |   ❌   |
-| `POST /api/records`            |  ✅   |   ❌    |   ❌   |
-| `PUT /api/records/{id}`        |  ✅   |   ❌    |   ❌   |
-| `DELETE /api/records/{id}`     |  ✅   |   ❌    |   ❌   |
-| `GET /api/records`             |  ✅   |   ✅    |   ❌   |
-| `GET /api/records/{id}`        |  ✅   |   ✅    |   ❌   |
-| `GET /api/dashboard/*`         |  ✅   |   ✅    |   ✅   |
+| `POST /api/auth/*`             |  Yes  |   Yes   |  Yes   |
+| `GET /api/users`               |  Yes  |   No    |   No   |
+| `POST /api/users`              |  Yes  |   No    |   No   |
+| `PUT /api/users/{id}`          |  Yes  |   No    |   No   |
+| `PATCH /api/users/{id}/status` |  Yes  |   No    |   No   |
+| `DELETE /api/users/{id}`       |  Yes  |   No    |   No   |
+| `POST /api/records`            |  Yes  |   No    |   No   |
+| `PUT /api/records/{id}`        |  Yes  |   No    |   No   |
+| `DELETE /api/records/{id}`     |  Yes  |   No    |   No   |
+| `GET /api/records`             |  Yes  |   Yes   |   No   |
+| `GET /api/records/{id}`        |  Yes  |   Yes   |   No   |
+| `GET /api/dashboard/*`         |  Yes  |   Yes   |  Yes   |
 
 ### Role Behavior Summary
 
-| Role    | Capabilities                                                              |
-|---------|---------------------------------------------------------------------------|
-| Admin   | Full access — manage users, create/update/delete records, view dashboard  |
-| Analyst | Read financial records + access all dashboard analytics                   |
-| Viewer  | Dashboard view only (summary, trends, categories, recent activity)        |
+| Role    | Capabilities                                                             |
+|---------|--------------------------------------------------------------------------|
+| Admin   | Full access — manage users, create/update/delete records, view dashboard |
+| Analyst | Read financial records + access all dashboard analytics                  |
+| Viewer  | Dashboard view only (summary, trends, categories, recent activity)       |
 
 ---
 
 ## API Documentation
 
-> **Swagger UI:** After starting the application, visit `http://localhost:8080/swagger-ui.html` for interactive API exploration with Bearer token authentication.
+> **Swagger UI:** After starting the application, visit [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) for interactive API exploration with Bearer token authentication.
 
 ### Authentication
 
 | Method | Endpoint             | Description                              | Auth Required |
 |--------|----------------------|------------------------------------------|:---:|
-| POST   | `/api/auth/register` | Register a new user (defaults to VIEWER) | ❌ |
-| POST   | `/api/auth/login`    | Login and receive JWT token              | ❌ |
+| POST   | `/api/auth/register` | Register a new user (defaults to VIEWER) | No  |
+| POST   | `/api/auth/login`    | Login and receive JWT token              | No  |
 
 ### User Management (ADMIN only)
 
@@ -153,15 +152,16 @@ Cross-cutting:
 
 ### Financial Records
 
-| Method | Endpoint             | Description                        | Roles          |
-|--------|----------------------|------------------------------------|----------------|
-| GET    | `/api/records`       | List records (filter, page, sort)  | ADMIN, ANALYST |
-| GET    | `/api/records/{id}`  | Get record by ID                   | ADMIN, ANALYST |
-| POST   | `/api/records`       | Create a record                    | ADMIN          |
-| PUT    | `/api/records/{id}`  | Update a record                    | ADMIN          |
-| DELETE | `/api/records/{id}`  | Soft delete a record               | ADMIN          |
+| Method | Endpoint             | Description                       | Roles          |
+|--------|----------------------|-----------------------------------|----------------|
+| GET    | `/api/records`       | List records (filter, page, sort) | ADMIN, ANALYST |
+| GET    | `/api/records/{id}`  | Get record by ID                  | ADMIN, ANALYST |
+| POST   | `/api/records`       | Create a record                   | ADMIN          |
+| PUT    | `/api/records/{id}`  | Update a record                   | ADMIN          |
+| DELETE | `/api/records/{id}`  | Soft delete a record              | ADMIN          |
 
 **Filter Parameters:**
+
 ```
 GET /api/records?type=INCOME&category=Salary&startDate=2026-01-01&endDate=2026-03-31&page=0&size=10&sortBy=date&sortDir=desc
 ```
@@ -180,8 +180,11 @@ All filter parameters are optional and can be combined freely.
 ### Sample Request/Response
 
 **Register (defaults to VIEWER for security):**
-```json
+
+```http
 POST /api/auth/register
+Content-Type: application/json
+
 {
   "name": "Karthik M",
   "email": "karthik@zorvyn.com",
@@ -189,7 +192,8 @@ POST /api/auth/register
 }
 ```
 
-**Response:**
+**Response (201 Created):**
+
 ```json
 {
   "success": true,
@@ -207,8 +211,11 @@ POST /api/auth/register
 ```
 
 **Login:**
-```json
+
+```http
 POST /api/auth/login
+Content-Type: application/json
+
 {
   "email": "karthik@zorvyn.com",
   "password": "securePass123"
@@ -216,9 +223,12 @@ POST /api/auth/login
 ```
 
 **Create Financial Record (ADMIN only):**
-```json
+
+```http
 POST /api/records
 Authorization: Bearer <jwt-token>
+Content-Type: application/json
+
 {
   "amount": 5000.00,
   "type": "INCOME",
@@ -228,7 +238,8 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-**Response:**
+**Response (201 Created):**
+
 ```json
 {
   "success": true,
@@ -250,10 +261,13 @@ Authorization: Bearer <jwt-token>
 ```
 
 **Dashboard Summary:**
-```json
+
+```http
 GET /api/dashboard/summary
 Authorization: Bearer <jwt-token>
+```
 
+```json
 {
   "success": true,
   "message": "Summary retrieved successfully",
@@ -269,8 +283,10 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-**Error Response (Validation — 400):**
+**Error Responses:**
+
 ```json
+// 400 Bad Request — Validation
 {
   "success": false,
   "message": "Validation failed",
@@ -280,31 +296,32 @@ Authorization: Bearer <jwt-token>
   },
   "timestamp": "2026-04-02T10:00:00"
 }
-```
 
-**Error Response (Unauthorized — 401):**
-```json
+// 401 Unauthorized
 {
   "success": false,
   "message": "Unauthorized: Authentication is required to access this resource",
   "timestamp": "2026-04-02T10:00:00"
 }
-```
 
-**Error Response (Forbidden — 403):**
-```json
+// 403 Forbidden
 {
   "success": false,
   "message": "You do not have permission to perform this action",
   "timestamp": "2026-04-02T10:00:00"
 }
-```
 
-**Error Response (Not Found — 404):**
-```json
+// 404 Not Found
 {
   "success": false,
   "message": "Financial Record not found with id: '99'",
+  "timestamp": "2026-04-02T10:00:00"
+}
+
+// 409 Conflict — Duplicate
+{
+  "success": false,
+  "message": "User with email 'karthik@zorvyn.com' already exists",
   "timestamp": "2026-04-02T10:00:00"
 }
 ```
@@ -324,12 +341,14 @@ cd zorvyn-finance-backend
 docker-compose up --build
 ```
 
-The app will be available at `http://localhost:8080`
-Swagger UI: `http://localhost:8080/swagger-ui.html`
+The app will be available at [http://localhost:8080](http://localhost:8080)
+
+Swagger UI: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 
 ### Option 2: Local Development
 
 **Prerequisites:**
+
 - Java 17+
 - Maven 3.8+
 - PostgreSQL 14+
@@ -363,7 +382,7 @@ curl -X POST http://localhost:8080/api/auth/register \
 docker exec -it finance-db psql -U finance_user -d finance_db \
   -c "UPDATE users SET role = 'ADMIN' WHERE email = 'admin@zorvyn.com';"
 
-# 3. Login to get fresh ADMIN token
+# 3. Login to get fresh ADMIN token (role is encoded in JWT at login time)
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@zorvyn.com","password":"adminPass123"}'
@@ -371,7 +390,7 @@ curl -X POST http://localhost:8080/api/auth/login \
 
 ---
 
-## 🧪 Running Tests
+## Running Tests
 
 ```bash
 # Run all tests
@@ -380,38 +399,38 @@ mvn test
 
 **Test Results: 26 tests, 0 failures**
 
-| Test Suite                        | Tests | Status |
-|-----------------------------------|:-----:|:------:|
-| `FinancialRecordControllerTest`   |   5   |   ✅   |
-| `AuthControllerTest`              |   4   |   ✅   |
-| `UserServiceTest`                 |   7   |   ✅   |
-| `DashboardServiceTest`            |   4   |   ✅   |
-| `FinancialRecordServiceTest`      |   5   |   ✅   |
-| `FinanceApplicationTests`         |   1   |   ✅   |
+| Test Suite                      | Tests | Status |
+|---------------------------------|:-----:|:------:|
+| `FinancialRecordControllerTest` |   5   |  Pass  |
+| `AuthControllerTest`            |   4   |  Pass  |
+| `UserServiceTest`               |   7   |  Pass  |
+| `DashboardServiceTest`          |   4   |  Pass  |
+| `FinancialRecordServiceTest`    |   5   |  Pass  |
+| `FinanceApplicationTests`       |   1   |  Pass  |
 
-Tests use an **in-memory H2 database** (`application-test.yml`) so no external database is needed.
+Tests use an in-memory H2 database (`application-test.yml`) so no external database is needed.
 
 ---
 
 ## Assumptions
 
 1. **Single-tenant system** — The system is designed for a single organization.
-2. **Bootstrap Admin** — The first Admin account is provisioned via database migration or direct DB update. All public registrations default to `VIEWER` for security.
+2. **Bootstrap Admin** — The first Admin account is provisioned via direct database update. All public registrations default to `VIEWER` for security.
 3. **Each financial record belongs to one user** — The creator is tracked via the `createdBy` foreign key relationship.
 4. **Categories are free text** — Users can enter any category string rather than selecting from a predefined list, providing flexibility.
 5. **Roles are fixed** — `ADMIN`, `ANALYST`, `VIEWER` are the only roles, defined as a Java enum for type safety.
 6. **Dates cannot be in the future** — Financial records must have past or present dates, enforced via `@PastOrPresent` validation.
-7. **Soft delete is used** — No data is permanently deleted. Records are marked with `deleted = true` and globally filtered via Hibernate's `@SQLRestriction` annotation.
+7. **Soft delete is used** — No data is permanently deleted. Records are marked with `deleted = true` and globally filtered via Hibernate `@SQLRestriction`.
 
 ---
 
 ## Design Decisions
 
-1. **Layered Architecture** — `Controller → Service → Repository` pattern ensures clear separation of concerns and testability. Each layer has a single responsibility.
+1. **Layered Architecture** — `Controller -> Service -> Repository` pattern ensures clear separation of concerns and testability. Each layer has a single responsibility.
 
-2. **Role Enforcement Strategy** — Public registration is hardcoded to `VIEWER` role. Elevated roles (`ADMIN`, `ANALYST`) can only be assigned by an authenticated Admin via the `/api/users` management endpoint. This prevents privilege escalation attacks at the registration level.
+2. **Role Enforcement Strategy** — Public registration is hardcoded to `VIEWER` role. Elevated roles can only be assigned by an authenticated Admin via `/api/users`. This prevents privilege escalation attacks at the registration level.
 
-3. **Global Soft Delete via `@SQLRestriction`** — Instead of manually adding `WHERE deleted = false` to every query, Hibernate's `@SQLRestriction` annotation is applied at the entity level. This ensures soft-deleted records are **automatically excluded from all queries** — including standard JPA methods, custom JPQL, joins, and dashboard aggregations — making the system foolproof against data leakage.
+3. **Global Soft Delete via `@SQLRestriction`** — Instead of manually adding `WHERE deleted = false` to every query, Hibernate `@SQLRestriction("deleted = false")` is applied at the entity level. This ensures soft-deleted records are automatically excluded from all queries, joins, and dashboard aggregations.
 
 4. **Stateless JWT Authentication** — Eliminates server-side session management, making the API horizontally scalable. Uses the modern JJWT 0.12.x API with auto-detected signing algorithms.
 
@@ -423,7 +442,7 @@ Tests use an **in-memory H2 database** (`application-test.yml`) so no external d
 
 8. **DTO Pattern** — Request/Response DTOs decouple API contracts from JPA entities, preventing internal data leakage (e.g., password hashes never appear in API responses).
 
-9. **Global Exception Handler** — Centralized `@ControllerAdvice` with 12 distinct exception handlers ensures consistent error responses with appropriate HTTP status codes across all endpoints.
+9. **Global Exception Handler** — Centralized `@ControllerAdvice` with distinct exception handlers ensures consistent error responses with appropriate HTTP status codes across all endpoints.
 
 10. **Database-Level Aggregation** — Dashboard analytics use `SUM`, `COUNT`, `GROUP BY`, and `EXTRACT` directly in JPQL queries, executing at the database level for efficiency rather than fetching all records into memory.
 
@@ -431,16 +450,16 @@ Tests use an **in-memory H2 database** (`application-test.yml`) so no external d
 
 ## Trade-offs
 
-| Decision                           | Benefit                                  | Trade-off                                       |
-|------------------------------------|------------------------------------------|-------------------------------------------------|
-| Free-text categories               | Flexibility for users                    | No category validation or normalization         |
-| Single JWT secret                  | Simple configuration                     | Rotating secret requires redeployment           |
-| Soft delete with `@SQLRestriction` | Data preservation + leak-proof queries   | DB storage grows over time; needs archival plan |
-| Enum-based roles                   | Type safety, simple implementation       | Adding new roles requires code change           |
-| PostgreSQL                         | Relational consistency, ACID compliance  | Requires running a database server              |
-| Monolithic structure               | Simplicity for assignment scope          | Not microservice-ready out of the box           |
-| H2 for tests                       | Fast, in-memory test execution           | Minor behavioral differences from PostgreSQL    |
-| Force VIEWER on registration       | Prevents privilege escalation            | Requires Admin to manually elevate users        |
+| Decision                           | Benefit                                 | Trade-off                                       |
+|------------------------------------|-----------------------------------------|-------------------------------------------------|
+| Free-text categories               | Flexibility for users                   | No category validation or normalization         |
+| Single JWT secret                  | Simple configuration                    | Rotating secret requires redeployment           |
+| Soft delete with `@SQLRestriction` | Data preservation + leak-proof queries  | DB storage grows over time; needs archival plan |
+| Enum-based roles                   | Type safety, simple implementation      | Adding new roles requires code change           |
+| PostgreSQL                         | Relational consistency, ACID compliance | Requires running a database server              |
+| Monolithic structure               | Simplicity for assignment scope         | Not microservice-ready out of the box           |
+| H2 for tests                       | Fast, in-memory test execution          | Minor behavioral differences from PostgreSQL    |
+| Force VIEWER on registration       | Prevents privilege escalation           | Requires Admin to manually elevate users        |
 
 ---
 
@@ -448,49 +467,50 @@ Tests use an **in-memory H2 database** (`application-test.yml`) so no external d
 
 ### User Entity
 
-| Field     | Type          | Constraints                                           |
-|-----------|---------------|-------------------------------------------------------|
-| id        | Long          | PK, Auto-generated                                    |
-| name      | String(100)   | Not null                                              |
-| email     | String(150)   | Not null, Unique                                      |
-| password  | String        | Not null, BCrypt encoded                              |
-| role      | Enum          | ADMIN / ANALYST / VIEWER                              |
-| status    | Enum          | ACTIVE / INACTIVE                                     |
-| deleted   | Boolean       | Default: false, Filtered globally via `@SQLRestriction` |
-| createdAt | LocalDateTime | Auto-generated on creation                            |
-| updatedAt | LocalDateTime | Auto-updated on modification                          |
+| Field     | Type          | Constraints                                              |
+|-----------|---------------|----------------------------------------------------------|
+| id        | Long          | PK, Auto-generated                                       |
+| name      | String(100)   | Not null                                                 |
+| email     | String(150)   | Not null, Unique                                         |
+| password  | String        | Not null, BCrypt encoded                                 |
+| role      | Enum          | ADMIN / ANALYST / VIEWER                                 |
+| status    | Enum          | ACTIVE / INACTIVE                                        |
+| deleted   | Boolean       | Default: false, Filtered globally via `@SQLRestriction`  |
+| createdAt | LocalDateTime | Auto-generated on creation                               |
+| updatedAt | LocalDateTime | Auto-updated on modification                             |
 
 ### Financial Record Entity
 
-| Field     | Type             | Constraints                                           |
-|-----------|------------------|-------------------------------------------------------|
-| id        | Long             | PK, Auto-generated                                    |
-| amount    | BigDecimal(15,2) | Not null, Must be positive                            |
-| type      | Enum             | INCOME / EXPENSE                                      |
-| category  | String(100)      | Not null, Indexed for search performance              |
-| date      | LocalDate        | Not null, Indexed, Must be past or present            |
-| notes     | String(500)      | Optional                                              |
-| createdBy | User (FK)        | @ManyToOne, Indexed, Tracks record creator            |
-| deleted   | Boolean          | Default: false, Filtered globally via `@SQLRestriction` |
-| createdAt | LocalDateTime    | Auto-generated on creation                            |
-| updatedAt | LocalDateTime    | Auto-updated on modification                          |
+| Field     | Type             | Constraints                                              |
+|-----------|------------------|----------------------------------------------------------|
+| id        | Long             | PK, Auto-generated                                       |
+| amount    | BigDecimal(15,2) | Not null, Must be positive                               |
+| type      | Enum             | INCOME / EXPENSE                                         |
+| category  | String(100)      | Not null, Indexed for search performance                 |
+| date      | LocalDate        | Not null, Indexed, Must be past or present               |
+| notes     | String(500)      | Optional                                                 |
+| createdBy | User (FK)        | ManyToOne, Indexed, Tracks record creator                |
+| deleted   | Boolean          | Default: false, Filtered globally via `@SQLRestriction`  |
+| createdAt | LocalDateTime    | Auto-generated on creation                               |
+| updatedAt | LocalDateTime    | Auto-updated on modification                             |
 
 ### Entity Relationship Diagram
 
 ```
-┌──────────────┐         ┌────────────────────┐
-│     User     │         │  FinancialRecord   │
-├──────────────┤         ├────────��───────────┤
-│ id (PK)      │◄────────│ created_by_id (FK) │
-│ name         │   1:N   │ amount             │
-│ email (UQ)   │         │ type               │
-│ password     │         │ category           │
-│ role         │         │ date               │
-│ status       │         │ notes              │
-│ deleted      │         │ deleted            │
-│ createdAt    │         │ createdAt          │
-│ updatedAt    │         │ updatedAt          │
-└──────────────┘         └────────────────────┘
++----------------+         +----------------------+
+|     User       |         |  FinancialRecord     |
++----------------+         +----------------------+
+| id (PK)        |<--------| created_by_id (FK)   |
+| name           |   1:N   | id (PK)              |
+| email (UQ)     |         | amount               |
+| password       |         | type                 |
+| role           |         | category             |
+| status         |         | date                 |
+| deleted        |         | notes                |
+| createdAt      |         | deleted              |
+| updatedAt      |         | createdAt            |
++----------------+         | updatedAt            |
+                           +----------------------+
 ```
 
 ---
@@ -511,10 +531,11 @@ zorvyn-finance-backend/
     │   │   │   ├── OpenApiConfig.java
     │   │   │   └── SecurityConfig.java
     │   │   ├── security/
+    │   │   │   ├── CustomUserDetailsService.java
+    │   │   │   ├── JwtAccessDeniedHandler.java
     │   │   │   ├── JwtAuthenticationEntryPoint.java
     │   │   │   ├── JwtAuthenticationFilter.java
-    │   │   │   ├── JwtTokenProvider.java
-    │   │   │   └── CustomUserDetailsService.java
+    │   │   │   └── JwtTokenProvider.java
     │   │   ├── dto/
     │   │   │   ├── ApiResponse.java
     │   │   │   ├── auth/
@@ -551,7 +572,7 @@ zorvyn-finance-backend/
     │   │   │   ├── UserController.java
     │   │   │   ├── FinancialRecordController.java
     │   │   │   └── DashboardController.java
-    │   │   ���── exception/
+    │   │   └── exception/
     │   │       ├── GlobalExceptionHandler.java
     │   │       ├── ResourceNotFoundException.java
     │   │       ├── DuplicateResourceException.java
@@ -576,21 +597,21 @@ zorvyn-finance-backend/
 
 ## Assignment Compliance Summary
 
-| Assignment Requirement              | Implementation                                           | Status |
-|--------------------------------------|----------------------------------------------------------|:------:|
-| User and Role Management             | Full CRUD + role assignment + status management          |   ✅   |
-| Financial Records Management         | CRUD + filtering by type/category/date + pagination      |   ✅   |
-| Dashboard Summary APIs               | Summary, category-wise, monthly trends, recent activity  |   ✅   |
-| Access Control Logic                 | JWT + `@PreAuthorize` RBAC on every endpoint             |   ✅   |
-| Validation and Error Handling        | DTO validation + `@ControllerAdvice` + proper HTTP codes |   ✅   |
-| Data Persistence                     | PostgreSQL + JPA + indexed entities                      |   ✅   |
-| Authentication (Optional)            | JWT stateless auth with JJWT 0.12.5                      |   ✅   |
-| Pagination (Optional)               | Configurable page/size/sortBy/sortDir                    |   ✅   |
-| Search Support (Optional)            | Case-insensitive category partial match                  |   ✅   |
-| Soft Delete (Optional)              | Global `@SQLRestriction` on both entities                |   ✅   |
-| Unit Tests (Optional)               | 26 tests, all passing                                    |   ✅   |
-| API Documentation (Optional)        | Swagger UI at `/swagger-ui.html`                         |   ✅   |
-| Docker (Optional)                   | Multi-stage Dockerfile + docker-compose                  |   ✅   |
+| Requirement                          | Implementation                                          | Status    |
+|--------------------------------------|---------------------------------------------------------|:---------:|
+| User and Role Management             | Full CRUD + role assignment + status management         | Completed |
+| Financial Records Management         | CRUD + filtering by type/category/date + pagination     | Completed |
+| Dashboard Summary APIs               | Summary, category-wise, monthly trends, recent activity | Completed |
+| Access Control Logic                 | JWT + `@PreAuthorize` RBAC on every endpoint            | Completed |
+| Validation and Error Handling        | DTO validation + `@ControllerAdvice` + proper HTTP codes| Completed |
+| Data Persistence                     | PostgreSQL + JPA + indexed entities                     | Completed |
+| Authentication (Optional)            | JWT stateless auth with JJWT 0.12.5                    | Completed |
+| Pagination (Optional)               | Configurable page/size/sortBy/sortDir                   | Completed |
+| Search Support (Optional)            | Case-insensitive category partial match                 | Completed |
+| Soft Delete (Optional)              | Global `@SQLRestriction` on both entities               | Completed |
+| Unit Tests (Optional)               | 26 tests, all passing                                   | Completed |
+| API Documentation (Optional)        | Swagger UI at `/swagger-ui.html`                        | Completed |
+| Docker (Optional)                   | Multi-stage Dockerfile + docker-compose                 | Completed |
 
 ---
 
@@ -598,4 +619,4 @@ zorvyn-finance-backend/
 
 This project is built as part of the Zorvyn FinTech Backend Developer Intern assignment.
 
-© 2026 Karthik M. All rights reserved.
+&copy; 2026 Karthik M. All rights reserved.

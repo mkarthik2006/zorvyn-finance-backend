@@ -21,16 +21,16 @@ public interface FinancialRecordRepository extends JpaRepository<FinancialRecord
         return findById(id);
     }
 
-    @Query(value = "SELECT fr FROM FinancialRecord fr JOIN FETCH fr.createdBy WHERE fr.deleted = false " +
-            "AND (:type IS NULL OR fr.type = :type) " +
-            "AND (:category IS NULL OR LOWER(fr.category) LIKE LOWER(CONCAT('%', :category, '%'))) " +
-            "AND (:startDate IS NULL OR fr.date >= :startDate) " +
-            "AND (:endDate IS NULL OR fr.date <= :endDate)",
-           countQuery = "SELECT COUNT(fr) FROM FinancialRecord fr WHERE fr.deleted = false " +
-            "AND (:type IS NULL OR fr.type = :type) " +
-            "AND (:category IS NULL OR LOWER(fr.category) LIKE LOWER(CONCAT('%', :category, '%'))) " +
-            "AND (:startDate IS NULL OR fr.date >= :startDate) " +
-            "AND (:endDate IS NULL OR fr.date <= :endDate)")
+    @Query(value = "SELECT fr FROM FinancialRecord fr JOIN FETCH fr.createdBy " +
+            "WHERE (:type IS NULL OR fr.type = :type) " +
+            "AND (:category IS NULL OR LOWER(fr.category) LIKE LOWER(CONCAT('%', CAST(:category AS string), '%'))) " +
+            "AND (CAST(:startDate AS date) IS NULL OR fr.date >= :startDate) " +
+            "AND (CAST(:endDate AS date) IS NULL OR fr.date <= :endDate)",
+           countQuery = "SELECT COUNT(fr) FROM FinancialRecord fr " +
+            "WHERE (:type IS NULL OR fr.type = :type) " +
+            "AND (:category IS NULL OR LOWER(fr.category) LIKE LOWER(CONCAT('%', CAST(:category AS string), '%'))) " +
+            "AND (CAST(:startDate AS date) IS NULL OR fr.date >= :startDate) " +
+            "AND (CAST(:endDate AS date) IS NULL OR fr.date <= :endDate)")
     Page<FinancialRecord> findAllWithFilters(
             @Param("type") RecordType type,
             @Param("category") String category,
@@ -39,11 +39,11 @@ public interface FinancialRecordRepository extends JpaRepository<FinancialRecord
             Pageable pageable);
 
     @Query("SELECT COALESCE(SUM(fr.amount), 0) FROM FinancialRecord fr " +
-            "WHERE fr.deleted = false AND fr.type = :type")
+            "WHERE fr.type = :type")
     BigDecimal sumByType(@Param("type") RecordType type);
 
     @Query("SELECT COUNT(fr) FROM FinancialRecord fr " +
-            "WHERE fr.deleted = false AND fr.type = :type")
+            "WHERE fr.type = :type")
     long countByType(@Param("type") RecordType type);
 
     long count();
@@ -53,17 +53,17 @@ public interface FinancialRecordRepository extends JpaRepository<FinancialRecord
     }
 
     @Query("SELECT fr.category, fr.type, COALESCE(SUM(fr.amount), 0), COUNT(fr) " +
-            "FROM FinancialRecord fr WHERE fr.deleted = false " +
+            "FROM FinancialRecord fr " +
             "GROUP BY fr.category, fr.type ORDER BY fr.category")
     List<Object[]> getCategoryWiseSummary();
 
     @Query("SELECT EXTRACT(YEAR FROM fr.date), EXTRACT(MONTH FROM fr.date), fr.type, " +
             "COALESCE(SUM(fr.amount), 0), COUNT(fr) " +
-            "FROM FinancialRecord fr WHERE fr.deleted = false " +
+            "FROM FinancialRecord fr " +
             "GROUP BY EXTRACT(YEAR FROM fr.date), EXTRACT(MONTH FROM fr.date), fr.type " +
             "ORDER BY EXTRACT(YEAR FROM fr.date), EXTRACT(MONTH FROM fr.date)")
     List<Object[]> getMonthlyTrends();
 
-    @Query("SELECT fr FROM FinancialRecord fr JOIN FETCH fr.createdBy WHERE fr.deleted = false ORDER BY fr.createdAt DESC")
+    @Query("SELECT fr FROM FinancialRecord fr JOIN FETCH fr.createdBy ORDER BY fr.createdAt DESC")
     List<FinancialRecord> findRecentRecords(Pageable pageable);
 }
