@@ -1,5 +1,5 @@
 # 1. Build Stage: Use a Maven image that includes the JDK
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
 # Copy all files from your local directory to the container
@@ -9,7 +9,7 @@ COPY . .
 RUN mvn clean package -DskipTests
 
 # 2. Runtime Stage: Use a slim JRE image for the final container
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 
 # Copy the generated jar file from the build stage

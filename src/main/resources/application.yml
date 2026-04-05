@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5433/finance_db
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/finance_db}
     username: finance_user
     password: finance_pass
     driver-class-name: org.postgresql.Driver
@@ -42,3 +42,12 @@ logging:
   level:
     com.zorvyn.finance: INFO
     org.springframework.security: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
